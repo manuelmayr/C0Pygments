@@ -56,14 +56,24 @@ class C0Lexer(RegexLexer):
             (r'\n', Text),
             (r'\s+', Text),
             (r'\\\n', Text), # line continuation
+            (r'(//)(@)', bygroups(Comment.Single, Comment.Special),
+                          'singlecontracts'),
             (r'//(\n|(.|\n)*?[^\\]\n)', Comment.Single),
+            (r'//', Comment.Single),
             (r'(/\*)(@)', bygroups(Comment.Multiline, Comment.Special),
                           ('comments', 'contracts')),
             (r'/\*', Comment.Multiline, 'comments'),
         ],
+        'contractkeys': [
+          (r'(assert|requires|ensures|loop_invariant)', Comment.Special),
+        ],
+        'singlecontracts': [
+            (r'(\w+)(\s+)([^@]+?)(\s*\n)',
+             bygroups(using(this, state = 'contractkeys'),Text,using(this, state = 'statement'),Text), '#pop')
+        ],
         'contracts': [
-            (r'(assert|require|ensures)(\s+)([^@]+?)(\s*)(@)',
-             bygroups(Comment.Special,Text,using(this),Text,Comment.Special), '#pop'),
+            (r'(\w+)(\s+)([^@]+?)(\s*)(@)',
+             bygroups(using(this, state = 'contractkeys'),Text,using(this, state = 'statement'),Text,Comment.Special), '#pop'),
         ],
         'comments': [
             (r'[^*/]', Comment.Multiline),
